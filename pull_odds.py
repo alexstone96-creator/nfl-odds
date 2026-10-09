@@ -8,7 +8,10 @@ import datetime as dt, json, os, sys, urllib.request
 
 KEY = os.environ["ODDS_API_KEY"]
 BASE = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl"
-MARKETS = "player_receptions_alternate,player_receptions"
+MARKETS = os.environ.get("MARKETS", "player_receptions_alternate,player_receptions")
+OUTDIR = os.environ.get("OUTDIR", "odds")
+# skip the pull if credits are below this (keeps room for the receptions pulls, which come first)
+MIN_CREDITS = int(os.environ.get("MIN_CREDITS", "40"))
 # Up to 10 bookmakers cost the same as one region (~2 credits/game). DK + FD are where Alex bets;
 # the rest give a market consensus to spot when DK/FD are out of line.
 BOOKS = "draftkings,fanduel,betmgm,williamhill_us,espnbet,fanatics,betrivers,hardrockbet,bovada,betonlineag"
@@ -20,7 +23,10 @@ def get(url):
 
 
 now = dt.datetime.now(dt.timezone.utc)
-events, left = get(f"{BASE}/events?apiKey={KEY}")
+events, left = get(f"{BASE}/events?apiKey={KEY}")  # free call; header tells us credits left
+if left is not None and int(left) < MIN_CREDITS:
+    print(f"only {left} credits left (< {MIN_CREDITS}); skipping {OUTDIR} pull")
+    sys.exit(0)
 todo = [e for e in events
         if now < dt.datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) < now + dt.timedelta(days=7)]
 rows = []
@@ -37,10 +43,10 @@ for e in todo:
             for o in m["outcomes"]:
                 rows.append([g, j["commence_time"], b["key"], o.get("description"), o["name"], o.get("point"), o["price"]])
 
-out = dict(pulled_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"), games=len(todo), credits_remaining=left, rows=rows)
-os.makedirs("odds", exist_ok=True)
+out = dict(markets=MARKETS, pulled_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"), games=len(todo), credits_remaining=left, rows=rows)
+os.makedirs(OUTDIR, exist_ok=True)
 stamp = now.strftime("%Y-%m-%d_%H%M")
-for path in (f"odds/{stamp}.json", "odds/latest.json"):
+for path in (f"{OUTDIR}/{stamp}.json", f"{OUTDIR}/latest.json"):
     with open(path, "w") as f:
         json.dump(out, f, separators=(",", ":"))
 print(f"games {len(todo)}, rows {len(rows)}, credits left {left}")

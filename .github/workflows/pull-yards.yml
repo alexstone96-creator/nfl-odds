@@ -1,0 +1,34 @@
+name: Pull receiving-yards odds (test only)
+# Background test market: alternate receiving-yards ladders, once a week. Nothing is bet from this yet.
+# Skips itself if credits are under 150 so the receptions pulls always have room.
+on:
+  schedule:
+    - cron: "20 16 * * 3"   # Wed ~11:20 CDT / 10:20 CST (after the receptions pull)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: pull-odds
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull yards odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          MARKETS: player_reception_yds_alternate
+          OUTDIR: yards
+          MIN_CREDITS: "150"
+        run: python pull_odds.py
+      - name: Commit
+        run: |
+          git config user.name "odds-bot"
+          git config user.email "odds-bot@users.noreply.github.com"
+          git pull --rebase -q || true
+          git add yards || true
+          git diff --cached --quiet || git commit -m "yards $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
