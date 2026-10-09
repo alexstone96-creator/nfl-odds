@@ -1,0 +1,32 @@
+name: Pull receptions odds
+on:
+  schedule:
+    # GitHub cron is UTC. Chosen to land before Claude's scheduled tasks in Central time
+    # (CDT = UTC-5 until Nov 1, CST = UTC-6 after).
+    - cron: "5 16 * * 3"    # Wed ~11:05 CDT / 10:05 CST  -> first look at the week
+    - cron: "55 19 * * 5"   # Fri ~2:55 CDT / 1:55 CST    -> after injury reports
+    - cron: "50 14 * * 0"   # Sun ~9:50 CDT / 8:50 CST    -> closing lines
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: pull-odds
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python pull_odds.py
+      - name: Commit
+        run: |
+          git config user.name "odds-bot"
+          git config user.email "odds-bot@users.noreply.github.com"
+          git add odds
+          git diff --cached --quiet || git commit -m "odds $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
