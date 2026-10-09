@@ -1,4 +1,4 @@
-"""Pull NFL receptions props (DraftKings + FanDuel) from The Odds API.
+"""Pull NFL receptions props (DraftKings + FanDuel, plus 8 other US books for consensus) from The Odds API.
 
 Saves compact rows to odds/<UTC timestamp>.json and odds/latest.json:
   {"pulled_at": ..., "credits_remaining": ..., "rows": [[game, commence, book, player, side, point, price], ...]}
@@ -9,6 +9,9 @@ import datetime as dt, json, os, sys, urllib.request
 KEY = os.environ["ODDS_API_KEY"]
 BASE = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl"
 MARKETS = "player_receptions_alternate,player_receptions"
+# Up to 10 bookmakers cost the same as one region (~2 credits/game). DK + FD are where Alex bets;
+# the rest give a market consensus to spot when DK/FD are out of line.
+BOOKS = "draftkings,fanduel,betmgm,williamhill_us,espnbet,fanatics,betrivers,hardrockbet,bovada,betonlineag"
 
 
 def get(url):
@@ -24,7 +27,7 @@ rows = []
 for e in todo:
     try:
         j, left = get(f"{BASE}/events/{e['id']}/odds?apiKey={KEY}&regions=us&markets={MARKETS}"
-                      f"&bookmakers=draftkings,fanduel&oddsFormat=american")
+                      f"&bookmakers={BOOKS}&oddsFormat=american")
     except Exception as ex:  # one bad game shouldn't sink the pull
         print("failed", e.get("home_team"), ex, file=sys.stderr)
         continue
