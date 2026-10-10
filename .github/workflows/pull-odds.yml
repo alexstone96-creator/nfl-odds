@@ -4,7 +4,7 @@ on:
     # GitHub cron is UTC. Chosen to land before Claude's scheduled tasks in Central time
     # (CDT = UTC-5 until Nov 1, CST = UTC-6 after).
     - cron: "5 16 * * 3"    # Wed ~11:05 CDT / 10:05 CST  -> first look at the week
-    - cron: "55 19 * * 5"   # Fri ~2:55 CDT / 1:55 CST    -> after injury reports
+    - cron: "25 21 * * 5"   # Fri ~4:25 CDT / 3:25 CST    -> after the final injury reports (~3 PM CT)
     - cron: "50 14 * * 0"   # Sun ~9:50 CDT / 8:50 CST    -> closing lines
   workflow_dispatch: {}
 permissions:
