@@ -8,7 +8,8 @@ import datetime as dt, json, os, sys, urllib.request
 
 KEY = os.environ["ODDS_API_KEY"]
 BASE = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl"
-MARKETS = os.environ.get("MARKETS", "player_receptions_alternate,player_receptions")
+# Ladders only (Oct 10): the main over/under line mostly served unders, which we no longer bet; halves credit use.
+MARKETS = os.environ.get("MARKETS", "player_receptions_alternate")
 OUTDIR = os.environ.get("OUTDIR", "odds")
 # skip the pull if credits are below this (keeps room for the receptions pulls, which come first)
 MIN_CREDITS = int(os.environ.get("MIN_CREDITS", "40"))
