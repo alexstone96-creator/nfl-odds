@@ -6,7 +6,17 @@ on:
     - cron: "5 16 * * 3"    # Wed ~11:05 CDT / 10:05 CST  -> first look at the week
     - cron: "25 21 * * 5"   # Fri ~4:25 CDT / 3:25 CST    -> after the final injury reports (~3 PM CT)
     - cron: "50 14 * * 0"   # Sun ~9:50 CDT / 8:50 CST    -> closing lines
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: "Odds API markets (default: receptions ladders)"
+        required: false
+        default: ""
+      outdir:
+        description: "Folder to save into (default: odds)"
+        required: false
+        default: ""
+
 permissions:
   contents: write
 concurrency: pull-odds
@@ -22,12 +32,14 @@ jobs:
       - name: Pull odds
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          MARKETS: ${{ inputs.markets || 'player_receptions_alternate' }}
+          OUTDIR: ${{ inputs.outdir || 'odds' }}
         run: python pull_odds.py
       - name: Commit
         run: |
           git config user.name "odds-bot"
           git config user.email "odds-bot@users.noreply.github.com"
           git pull --rebase -q || true
-          git add odds
+          git add odds td yards 2>/dev/null || git add -A
           git diff --cached --quiet || git commit -m "odds $(date -u +%Y-%m-%dT%H:%MZ)"
           git push
