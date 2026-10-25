@@ -5,6 +5,7 @@ on:
     # (CDT = UTC-5 until Nov 1, CST = UTC-6 after).
     - cron: "5 16 * * 3"    # Wed ~11:05 CDT / 10:05 CST  -> first look at the week
     - cron: "25 21 * * 5"   # Fri ~4:25 CDT / 3:25 CST    -> after the final injury reports (~3 PM CT)
+    - cron: "30 23 * * 6"   # Sat ~6:30 CDT / 5:30 CST    -> Saturday-night check (late line moves, e.g. Jeudy +178 Oct 24)
     - cron: "50 14 * * 0"   # Sun ~9:50 CDT / 8:50 CST    -> closing lines
   workflow_dispatch:
     inputs:
